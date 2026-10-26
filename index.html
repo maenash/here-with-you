@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F9DFE8">
+<title>Here With You</title>
+<style>
+body{margin:0;background:#FFFAF5;color:#493A40;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+header{padding:20px;background:white;color:#C86F91;font-weight:bold}
+main{max-width:600px;margin:auto;padding:18px}
+.hero,.card{padding:22px;border-radius:24px;margin-bottom:16px}
+.hero{background:#F9DFE8}
+.card{background:white;border:1px solid #f0e3e7}
+h1{font-size:30px;line-height:1.2}
+p{line-height:1.6;color:#806e76}
+button{padding:13px;border:0;border-radius:14px;background:#C86F91;color:white;font-size:16px;width:100%;margin-top:8px}
+textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ead9df;border-radius:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<header>☀️ Here With You</header>
+<main>
+<div class="hero">
+<h1>A little light, when you need it most.</h1>
+<p>You don't have to figure it all out right now. Take this one moment at a time. You deserve kindness, exactly as you are.</p>
+<button onclick="document.getElementById('support').scrollIntoView({behavior:'smooth'})">I need support 💗</button>
+</div>
+<div class="card" id="support">
+<h2>Let's get through this moment.</h2>
+<p id="words">You do not have to solve everything right now. Just take one small step.</p>
+<button onclick="newWords()">A gentle reminder</button>
+<button onclick="ground()">Help me ground myself</button>
+<p id="grounding"></p>
+</div>
+<div class="card">
+<h2>How are you feeling?</h2>
+<button onclick="checkin('Calm')">😌 Calm</button>
+<button onclick="checkin('Okay')">🙂 Okay</button>
+<button onclick="checkin('Anxious')">🫧 Anxious</button>
+<button onclick="checkin('Overwhelmed')">🌧️ Overwhelmed</button>
+<p id="mood"></p>
+</div>
+<div class="card">
+<h2>My journal 📔</h2>
+<p>Write whatever is on your mind.</p>
+<textarea id="entry" rows="5" placeholder="Start anywhere..."></textarea>
+<button onclick="saveEntry()">Save on this device</button>
+<p id="saved"></p>
+<div id="entries"></div>
+</div>
+</main>
+<script>
+const reminders=[
+"You deserve patience from yourself, especially on hard days.",
+"You can take things one moment at a time. You don't have to solve everything today.",
+"You are allowed to pause, ask for help, and begin again.",
+"A difficult feeling deserves kindness, not judgment."
+];
+function newWords(){document.getElementById('words').textContent=reminders[Math.floor(Math.random()*reminders.length)]}
+const steps=["Name five things you can see.","Notice four things you can physically feel.","Listen for three sounds around you.","Notice two scents, or imagine a familiar one.","Name one small thing that may support you right now."];
+let step=0;
+function ground(){document.getElementById('grounding').textContent=steps[step];step=(step+1)%steps.length}
+function checkin(m){document.getElementById('mood').textContent="Your check-in: "+m+". Thank you for taking a moment for yourself. 💗";try{localStorage.setItem('hwy-mood',m)}catch(e){}}
+function saveEntry(){let t=document.getElementById('entry').value.trim();if(!t){document.getElementById('saved').textContent="Write a little something first, if you feel like it.";return}let a=[];try{a=JSON.parse(localStorage.getItem('hwy-entries')||'[]')}catch(e){}a.unshift({t,d:new Date().toLocaleDateString()});try{localStorage.setItem('hwy-entries',JSON.stringify(a));document.getElementById('saved').textContent="Entry saved in this browser.";document.getElementById('entry').value='';showEntries()}catch(e){document.getElementById('saved').textContent="This browser couldn't save the entry."}}
+function showEntries(){let a=[];try{a=JSON.parse(localStorage.getItem('hwy-entries')||'[]')}catch(e){}document.getElementById('entries').innerHTML=a.map(x=>'<p><b>'+x.d+'</b><br>'+String(x.t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</p>').join('')}
+showEntries();
+</script>
+</body>
+</html>
