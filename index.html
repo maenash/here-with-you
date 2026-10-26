@@ -6,6 +6,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F9DFE8">
 <title>Here With You</title>
+  /* Here With You — soft visual polish */
+body {
+  background: linear-gradient(180deg, #fff8fb 0%, #fffbf6 55%, #fff8ef 100%);
+  letter-spacing: 0.1px;
+}
+
+header {
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 3px 18px rgba(200, 111, 145, 0.07);
+}
+
+.sun {
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 230, 168, 0.45);
+}
+
+.hero {
+  background: linear-gradient(145deg, #f9dfe8, #fff0f4 70%, #fff8ee);
+  border: 1px solid rgba(200, 111, 145, 0.12);
+  box-shadow: 0 8px 24px rgba(160, 94, 119, 0.08);
+  padding: 25px 22px;
+}
+
+.card {
+  border: 1px solid rgba(200, 111, 145, 0.13);
+  border-radius: 22px;
+  box-shadow: 0 6px 22px rgba(90, 60, 70, 0.045);
+  padding: 22px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+h1 {
+  letter-spacing: -0.7px;
+  line-height: 1.22;
+}
+
+h2 {
+  letter-spacing: -0.3px;
+}
+
+p {
+  line-height: 1.7;
+}
+
+.primary {
+  background: linear-gradient(135deg, #c86f91, #b9577e);
+  box-shadow: 0 5px 12px rgba(185, 87, 126, 0.18);
+  border-radius: 17px;
+  padding: 15px;
+}
+
+.secondary,
+.choice {
+  border-radius: 16px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.choice.active {
+  background: #fce8ef;
+  border: 1.5px solid #c86f91;
+  box-shadow: 0 3px 10px rgba(200, 111, 145, 0.09);
+}
+
+textarea {
+  border-radius: 16px;
+  line-height: 1.6;
+}
+
+nav {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -5px 24px rgba(90, 60, 70, 0.07);
+  padding-top: 10px;
+}
+
+nav button.active {
+  background: #fff0f5;
+  border-radius: 13px;
+}
+
+.note {
+  border: 1px solid #f5dfae;
+  line-height: 1.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
 <style>
 :root{--pink:#F9DFE8;--yellow:#FFE6A8;--cream:#FFFAF5;--rose:#C86F91;--ink:#493A40}
 *{box-sizing:border-box}
@@ -125,7 +222,29 @@ nav button.active{color:#b9577e;font-weight:750}
 </div>
 <div class="card"><h2>Your saved entries</h2><div id="entries" class="small">Your entries will appear here.</div></div>
 </section>
+<section id="moodhistory" class="page">
+  <div class="hero">
+    <div style="font-size:32px">🌸 📅</div>
+    <h1>Your mood garden</h1>
+    <p>Every feeling deserves a little space. Look back gently, without judging yourself.</p>
+  </div>
 
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <button class="secondary" style="width:auto;margin:0" onclick="changeMonth(-1)">‹</button>
+      <h2 id="calendarTitle" style="margin:0;text-align:center">Mood history</h2>
+      <button class="secondary" style="width:auto;margin:0" onclick="changeMonth(1)">›</button>
+    </div>
+    <div id="moodCalendar" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:18px"></div>
+    <p class="small">Tap a day to see its saved check-in.</p>
+    <div id="moodDetail" class="note" aria-live="polite">Choose a date to explore your check-ins.</div>
+  </div>
+
+  <div class="card">
+    <h2>Your recent check-ins</h2>
+    <div id="moodHistoryList"></div>
+  </div>
+</section>
 <section id="growth" class="page">
 <div class="hero"><h1>Small steps count. 🌱</h1><p>Growth isn't a straight line. Resting and beginning again count, too.</p></div>
 <div class="card"><h2>Your journey</h2><p id="stats">Every check-in is a little act of noticing what you need.</p></div>
@@ -146,6 +265,10 @@ nav button.active{color:#b9577e;font-weight:750}
 <button data-tab="support" onclick="go('support')"><span>♡</span>Support</button>
 <button data-tab="journal" onclick="go('journal')"><span>▤</span>Journal</button>
 <button data-tab="growth" onclick="go('growth')"><span>✧</span>Growth</button>
+<button class="nav-btn" data-tab="moodhistory" onclick="go('moodhistory')">
+  <span>📅</span>
+  <small>Mood History</small>
+</button>
 </nav>
 
 <script>
@@ -257,6 +380,109 @@ function refreshGrowth(){
 restorePrefs();
 showEntries();
 refreshGrowth();
+  let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+function moodDateKey(value) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const parts = String(value).split(/[\/.-]/).map(Number);
+
+  if (parts.length === 3 && parts.every(Boolean)) {
+    if (parts[0] > 31) {
+      return `${parts[0]}-${String(parts[1]).padStart(2,"0")}-${String(parts[2]).padStart(2,"0")}`;
+    }
+    return `${parts[2]}-${String(parts[0]).padStart(2,"0")}-${String(parts[1]).padStart(2,"0")}`;
+  }
+
+  const date = new Date(value);
+  if (isNaN(date)) return "";
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+
+function changeMonth(amount) {
+  calendarMonth = new Date(
+    calendarMonth.getFullYear(),
+    calendarMonth.getMonth() + amount,
+    1
+  );
+  renderMoodCalendar();
+}
+
+function renderMoodCalendar() {
+  const calendar = document.getElementById("moodCalendar");
+  if (!calendar) return;
+
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+  const title = document.getElementById("calendarTitle");
+
+  title.textContent = calendarMonth.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric"
+  });
+
+  const moods = JSON.parse(localStorage.getItem("hwy-moods") || "[]");
+  const emojis = {
+    Calm: "😌",
+    Okay: "🙂",
+    Anxious: "🫧",
+    Overwhelmed: "🌧️",
+    Sad: "🥺",
+    Hopeful: "🌤️"
+  };
+
+  const headings = ["S", "M", "T", "W", "T", "F", "S"];
+  let html = headings.map(day =>
+    `<div style="text-align:center;font-size:12px;color:#946477;padding:6px 0">${day}</div>`
+  ).join("");
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) {
+    html += `<div></div>`;
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+    const key = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const matches = moods.filter(item => moodDateKey(item.date) === key);
+    const emoji = matches.length ? (emojis[matches[matches.length-1].mood] || "💗") : "";
+    const today = new Date().toDateString() === new Date(year, month, day).toDateString();
+
+    html += `<button type="button" onclick="showMoodDay('${key}')" style="min-width:0;padding:7px 0;border-radius:12px;border:1px solid ${today ? "#C86F91" : "#F1DCE4"};background:${matches.length ? "#F9DFE8" : "#FFFAF5"};color:#654654;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <span>${day}</span><span style="font-size:12px">${emoji || "&nbsp;"}</span>
+    </button>`;
+  }
+
+  calendar.innerHTML = html;
+
+  const list = document.getElementById("moodHistoryList");
+  const recent = moods.slice().reverse().slice(0, 20);
+
+  list.innerHTML = recent.length
+    ? recent.map(item => `<div class="note" style="margin:10px 0">
+        <strong>${emojis[item.mood] || "💗"} ${safe(String(item.mood || "Check-in"))}</strong>
+        <div class="small">${safe(String(item.date || ""))}</div>
+        ${item.note ? `<p>${safe(String(item.note))}</p>` : ""}
+      </div>`).join("")
+    : `<p class="small">Your check-ins will appear here when you start saving moods. 💗</p>`;
+}
+
+function showMoodDay(key) {
+  const moods = JSON.parse(localStorage.getItem("hwy-moods") || "[]");
+  const matches = moods.filter(item => moodDateKey(item.date) === key);
+  const detail = document.getElementById("moodDetail");
+
+  if (!matches.length) {
+    detail.textContent = "No check-in saved for this day. That's okay — every day is different. 💗";
+    return;
+  }
+
+  detail.innerHTML = matches.map(item =>
+    `<p><strong>${safe(String(item.mood || "Check-in"))}</strong>${item.note ? ` — ${safe(String(item.note))}` : ""}</p>`
+  ).join("");
+}
 </script>
 </body>
 </html>
