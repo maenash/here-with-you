@@ -10,10 +10,10 @@
 :root{--pink:#F9DFE8;--yellow:#FFE6A8;--cream:#FFFAF5;--rose:#C86F91;--ink:#493A40}
 *{box-sizing:border-box}
 body{margin:0;background:var(--cream);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-header{padding:16px;background:white;border-bottom:1px solid #f0e1e6;position:sticky;top:0;z-index:3;font-weight:750;color:var(--rose)}
+header{padding:16px;background:white;border-bottom:1px solid #f0e1e6;position:sticky;top:0;z-index:3;font-weight:750;color:var(--rose);padding-top:calc(16px + env(safe-area-inset-top))}
 .brand{display:flex;align-items:center;gap:10px}
 .sun{background:var(--yellow);padding:9px;border-radius:14px;font-size:22px}
-main{max-width:620px;margin:auto;padding:18px 15px calc(105px + env(safe-area-inset-bottom))}
+main{max-width:620px;margin:auto;padding:18px 15px calc(125px + env(safe-area-inset-bottom))}
 .hero,.card{padding:21px;border-radius:24px;margin-bottom:15px}
 .hero{background:var(--pink)}
 .card{background:white;border:1px solid #f0e1e6}
@@ -21,7 +21,9 @@ h1{font-size:29px;line-height:1.2;margin:12px 0}
 h2{font-size:21px;margin:4px 0 10px}
 p{line-height:1.6;color:#806e76}
 button,textarea{font:inherit}
-button{cursor:pointer}
+button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:focus-visible,textarea:focus-visible{outline:3px solid #e5a7c0;outline-offset:2px}
+@media (max-width:360px){h1{font-size:26px}.hero,.card{padding:18px}.grid{gap:7px}}
 .primary{background:var(--rose);color:white;border:0;border-radius:15px;padding:14px;width:100%;font-weight:650;margin-top:8px}
 .secondary{background:white;color:#8d4966;border:1px solid #e8cbd7;border-radius:14px;padding:12px;width:100%;margin-top:8px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -29,9 +31,9 @@ button{cursor:pointer}
 .choice.active{background:var(--pink);border-color:var(--rose)}
 textarea{width:100%;padding:13px;border:1px solid #ead9df;border-radius:13px;margin:8px 0;background:#fffcfa;color:var(--ink)}
 .page{display:none}.page.active{display:block}
-nav{position:fixed;bottom:0;left:0;right:0;z-index:5;background:#fff;border-top:1px solid #ead9df;display:flex;justify-content:space-around;padding:8px 3px calc(8px + env(safe-area-inset-bottom))}
-nav button{flex:1;background:none;border:0;color:#907b84;font-size:11px;padding:5px 0}
-nav button span{display:block;font-size:21px;margin-bottom:3px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.98);border-top:1px solid #ead9df;display:flex;justify-content:space-around;padding:8px 3px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -5px 20px rgba(110,70,85,.06)}
+nav button{flex:1;min-height:54px;background:none;border:0;color:#907b84;font-size:12px;padding:5px 0;touch-action:manipulation}
+nav button span{display:block;font-size:23px;line-height:1.2;margin-bottom:4px}
 nav button.active{color:#b9577e;font-weight:750}
 .small{font-size:12px;color:#907b84}
 .note{background:#fff3d8;border-radius:14px;padding:13px;font-size:13px;line-height:1.5;color:#735b43}
@@ -42,6 +44,11 @@ nav button.active{color:#b9577e;font-weight:750}
 
 <main>
 <section id="home" class="page active">
+<div class="card" id="welcome" style="background:#fff3d8;border-color:#f5e3b5">
+<h2>Welcome to your little safe space 💛</h2>
+<p>Here With You is a gentle place to pause, check in with yourself, and find a small next step. You can explore at your own pace.</p>
+<button class="secondary" onclick="dismissWelcome()">Let’s begin</button>
+</div>
 <div class="hero">
 <div style="font-size:32px">🌷 ☀️</div>
 <h1>You don't have to figure it all out right now.</h1>
@@ -84,6 +91,10 @@ nav button.active{color:#b9577e;font-weight:750}
 <p>You don't need to make every feeling disappear. Let's find one small thing that may help.</p>
 </div>
 <div class="card">
+<h2>Choose one small thing</h2>
+<p>You don't need to do every exercise. Pick the option that feels easiest, or skip them all.</p>
+</div>
+<div class="card">
 <h2>🌿 Ground yourself</h2>
 <p id="groundtext">Start by noticing five things you can see around you.</p>
 <button class="primary" onclick="nextGround()">Next grounding step</button>
@@ -110,7 +121,7 @@ nav button.active{color:#b9577e;font-weight:750}
 <p>What do you wish someone understood about how you feel today?</p>
 <textarea id="entry" rows="6" placeholder="Write whatever is on your mind…"></textarea>
 <button class="primary" onclick="saveEntry()">Save entry on this device</button>
-<p id="entrymsg" class="small" aria-live="polite"></p>
+<p id="entrymsg" class="small" aria-live="polite"></p><p class="small">Privacy note: entries stay in this browser on this device. They are not synced to an account. Avoid entering details you would not want someone with access to this device to see.</p>
 </div>
 <div class="card"><h2>Your saved entries</h2><div id="entries" class="small">Your entries will appear here.</div></div>
 </section>
@@ -154,8 +165,19 @@ const reminders=[
 'A difficult feeling deserves kindness, not judgment.',
 'You can take things at your own pace. There is no need to rush.'
 ];
-function read(key){try{return JSON.parse(localStorage.getItem('hwy-'+key)||'[]')}catch(e){return []}}
+function read(key){try{const raw=localStorage.getItem('hwy-'+key);return raw===null?[]:JSON.parse(raw)}catch(e){return []}}
 function write(key,value){try{localStorage.setItem('hwy-'+key,JSON.stringify(value));return true}catch(e){return false}}
+function dismissWelcome(){
+  document.getElementById('welcome').style.display='none';
+  write('welcomeSeen',true);
+}
+function restorePrefs(){
+  const saved=read('prefs');
+  document.querySelectorAll('#prefs .choice').forEach(b=>{
+    if(saved.includes(b.textContent)) b.classList.add('active');
+  });
+  if(read('welcomeSeen')===true) document.getElementById('welcome').style.display='none';
+}
 function go(id){
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
@@ -211,7 +233,7 @@ function saveEntry(){
 }
 function showEntries(){
  const list=read('entries');
- document.getElementById('entries').innerHTML=list.length?list.map(e=>'<div style="padding:12px 0;border-bottom:1px solid #f0e1e6"><b>'+safe(e.date)+'</b><p style="white-space:pre-wrap">'+safe(e.text)+'</p></div>').join(''):'Your entries will appear here.';
+ document.getElementById('entries').innerHTML=list.length?list.map(e=>'<div style="padding:12px 0;border-bottom:1px solid #f0e1e6"><b>'+safe(e.date)+'</b><p style="white-space:pre-wrap">'+safe(e.text)+'</p></div>').join(''):'Your saved entries will appear here on this device.';
 }
 function saveWin(){
  const box=document.getElementById('win');
@@ -232,6 +254,7 @@ function refreshGrowth(){
  const p=read('prefs');
  document.getElementById('savedprefs').textContent=p.length?p.join(', '):'Choose your Comfort Blueprint on the Home screen.';
 }
+restorePrefs();
 showEntries();
 refreshGrowth();
 </script>
