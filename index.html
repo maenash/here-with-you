@@ -306,6 +306,7 @@ function go(id){
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
  if(id==='journal')showEntries();
  if(id==='growth')refreshGrowth();
+  if(id==='moodhistory')renderMoodCalendar();
  window.scrollTo({top:0,behavior:'auto'});
 }
 function savePrefs(){
